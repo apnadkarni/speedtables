@@ -13,11 +13,23 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
+#endif
+
 #include <sys/types.h>
+#ifdef WITH_NETWORK
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/ethernet.h>
+#endif
 
 #ifdef HAVE_NETINET_ETHER_H
 #include <netinet/ether.h>
@@ -25,6 +37,8 @@
 
 #ifdef HAVE_SYS_LIMITS_H
 #include <sys/limits.h>
+#else
+#include <limits.h>
 #endif
 
 #ifdef WITH_PGTCL

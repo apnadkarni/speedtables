@@ -26,6 +26,7 @@ namespace eval ctable {
     variable withDirty
     variable reservedWords
     variable errorDebug
+    variable withNetwork;   # Primarily used to leave out unimplemented Windows
 
     variable genCompilerDebug
     variable showCompilerCommands
@@ -71,6 +72,7 @@ namespace eval ctable {
 	sanityChecks
 	sharedGuard
 	ctablePackageVersion
+        withNetwork
     }
 
     set ctableErrorInfo ""
@@ -1378,11 +1380,13 @@ variable varstringCompSource {
 
 	  [gen_assign_string_with_default $table $fieldName string1 row1 0]
 	  if ((compType == CTABLE_COMP_MATCH) || (compType == CTABLE_COMP_NOTMATCH) || (compType == CTABLE_COMP_MATCH_CASE) || (compType == CTABLE_COMP_NOTMATCH_CASE)) {
+              int matchMeansKeep;
+	      struct ctableSearchMatchStruct *sm;
 [gen_null_exclude_during_sort_comp $table $fieldName]
 	      // matchMeansKeep will be 1 if matching means keep,
 	      // 0 if it means discard
-	      int matchMeansKeep = ((compType == CTABLE_COMP_MATCH) || (compType == CTABLE_COMP_MATCH_CASE));
-	      struct ctableSearchMatchStruct *sm = component->clientData;
+              matchMeansKeep = ((compType == CTABLE_COMP_MATCH) || (compType == CTABLE_COMP_MATCH_CASE));
+	      sm = component->clientData;
 
 	      if (sm->type == CTABLE_STRING_MATCH_ANCHORED) {
 		  char *field;
@@ -4801,6 +4805,7 @@ proc gen_preamble {} {
     variable withPgtcl
     variable withSharedTables
     variable withSharedTclExtension
+    variable withNetwork
     variable sanityChecks
     variable sharedTraceFile
     variable sharedBase
@@ -4840,6 +4845,15 @@ proc gen_preamble {} {
 	emit "#define CTABLE_EXTERNAL2"
     }
     emit ""
+
+    if {$::tcl_platform(platform) eq "windows"} {
+        foreach opt {withPgtcl withSharedTables withNetwork} {
+            if {[set $opt]} {
+                error "Feature $opt not implemented on Windows."
+            }
+        }
+    }
+
     if {$withPgtcl} {
         emit "#define WITH_PGTCL"
         emit ""
@@ -4847,6 +4861,10 @@ proc gen_preamble {} {
     if {$sanityChecks} {
 	emit "#define SANITY_CHECKS"
         emit ""
+    }
+
+    if {$withNetwork} {
+        emit "#define WITH_NETWORK"
     }
     if {$withSharedTables} {
 	emit "#define WITH_SHARED_TABLES"
@@ -5799,10 +5817,22 @@ proc compile {fileFragName version} {
     # Keep sysconfig(ccflags) from overriding optimization level
     regsub -all { -O[0-9] } " $sysconfig(ccflags) " { } sysconfig(ccflags)
 
-    myexec "$sysconfig(cc) $sysString $optflag $dbgflag $sysconfig(ldflags) $sysconfig(ccflags) -I$include $sysconfig(warn) $pgString $stubString $memDebugString -c $sourceFile -o $objFile"
+    set cc_cmd "$sysconfig(cc) $sysString $optflag $dbgflag $sysconfig(ldflags) $sysconfig(ccflags) -I$include $sysconfig(warn) $pgString $stubString $memDebugString -c $sourceFile"
 
-    set ld_cmd "$sysconfig(ld) $dbgflag -o $targetPath/lib${fileFragName}$sysconfig(shlib) $objFile"
+    # TBD - Output flags depend on cc/linker being used. Not clear how this is
+    # to be determined as tclConfig.sh does not seem to have a setting for this.
+    if {[string match -nocase "cl*" $sysconfig(cc)]} {
+        append cc_cmd " -Fo$objFile"
+    } else {
+        append cc_cmd " -o $objFile"
+    }
+    myexec $cc_cmd
 
+    if {[string match -nocase "link *" $sysconfig(ld)]} {
+        set ld_cmd "$sysconfig(ld) $dbgflag -out:$targetPath/lib${fileFragName}$sysconfig(shlib) $objFile"
+    } else {
+        set ld_cmd "$sysconfig(ld) $dbgflag -o $targetPath/lib${fileFragName}$sysconfig(shlib) $objFile"
+    }
     if {$withPgtcl} {
 	set pgtcl_lib $sysconfig(pgtclprefix)/lib
 	set pgtcl_ver $sysconfig(pgtclver)
@@ -5826,6 +5856,14 @@ proc compile {fileFragName version} {
     }
 
     append ld_cmd " $sysconfig(ldflags) $stub"
+
+    if {[string match -nocase "link *" $sysconfig(ld)]} {
+        # TBD - Detest this hack but there is just no way to pick these flags
+        # up from tclconfig.sh or configure that I can see. See Joe
+        # English's comments on tclconfig on the wiki
+        regsub -all {(^|\s)-L} $ld_cmd \\1-LIBPATH: ld_cmd
+        regsub -all {(^|\s)-l(\S+)} $ld_cmd  \\1\\2.lib ld_cmd
+    }
     myexec $ld_cmd
 
     if {$withSubdir} {

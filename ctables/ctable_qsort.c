@@ -30,7 +30,10 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)qsort.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
+
+#if !defined(_MSC_VER)
 #include <sys/cdefs.h>
+#endif
 
 #include <stdlib.h>
 
@@ -44,7 +47,9 @@ typedef int		 cmp_t(const void *, const void *);
 static inline char	*med3(char *, char *, char *, cmp_t *, void *);
 static inline void	 swapfunc(char *, char *, int, int);
 
-#define min(a, b)	(a) < (b) ? a : b
+#ifndef _MSC_VER
+#define min(a, b)	(((a) < (b)) ? (a) : (b))
+#endif
 
 /*
  * Qsort routine from Bentley & McIlroy's "Engineering a Sort Function".

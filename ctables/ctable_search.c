@@ -211,10 +211,9 @@ ctable_ParseSortFieldList (Tcl_Interp *interp, Tcl_Obj *fieldListObj, CONST char
 CTABLE_INTERNAL int
 ctable_searchMatchPatternCheck (char *s) {
     char c;
-if(!s) panic("ctable_searchMatchPatternCheck called with null");
-
     int firstCharIsStar = 0;
     int lastCharIsStar = 0;
+if(!s) panic("ctable_searchMatchPatternCheck called with null");
 
     if (*s == '\0') {
 	return CTABLE_STRING_MATCH_ANCHORED;
@@ -1442,11 +1441,14 @@ restart_search:
 	// Look for the best usable search field starting with the requested
 	// one
 	for(try = 0; try < search->nComponents; try++, index++) {
+	    CTableSearchComponent *component;
+	    int field;
+	    int score;
+
 	    if(index >= search->nComponents)
 	        index = 0;
-	    CTableSearchComponent *component = &search->components[index];
-	    int field = component->fieldID;
-	    int score;
+	    component = &search->components[index];
+	    field = component->fieldID;
 
 	    comparisonType = component->comparisonType;
 

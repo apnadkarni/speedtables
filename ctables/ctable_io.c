@@ -97,9 +97,9 @@ ctable_copyDequoted(char *dst, char *src, int length, int quoteType)
 {
     int i = 0, j = 0, c;
     int strict = 0;
+    int dequoteType = quoteType;
 
     if(length < 0) length = strlen(src);
-    int dequoteType = quoteType;
     if(dequoteType == CTABLE_QUOTE_STRICT_URI) {
 	dequoteType = CTABLE_QUOTE_URI;
 	strict = 1;
@@ -124,7 +124,7 @@ ctable_copyDequoted(char *dst, char *src, int length, int quoteType)
 
 	    c = src[i+3];
 	    src[i+3] = '\0';
-	    dst[j++] = strtol(&src[i+1], NULL, 16);
+	    dst[j++] = (char) strtol(&src[i+1], NULL, 16);
 	    src[i+3] = c;
 	    i += 3;
 	} else if(dequoteType == CTABLE_QUOTE_ESCAPE && src[i] == '\\') {

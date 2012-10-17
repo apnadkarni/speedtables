@@ -26,7 +26,7 @@
     # set to 1 to run various sanity checks on rows
     set sanityChecks 1
 
-    set withSharedTables 1
+    set withSharedTables [expr {$::tcl_platform(platform) ne "windows"}]
     set withSharedTclExtension 0
     # Either -none, -stderr, or the name of a file
     #set sharedTraceFile sharedebug.out
@@ -57,4 +57,5 @@
     # create files in a subdirectory
     set withSubdir 1
 
-
+    # Introduced for the Windows port
+    set withNetwork [expr {$::tcl_platform(platform) ne "windows"}]

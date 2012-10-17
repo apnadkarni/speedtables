@@ -11,7 +11,7 @@
  *
  */
 
-CTABLE_EXTERNAL int
+CTABLE_EXTERNAL int CTABLE_EXTERNAL2
 ${extension}_Init(Tcl_Interp *interp);
 
 static int
