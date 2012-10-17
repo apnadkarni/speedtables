@@ -34,3 +34,9 @@ settings based on tclConfig.sh, others from the configure script,
 and some hard coded. To get it to build the extension, you therefore
 have to make sure the toolchain you are using is the same as the
 one used for the Tcl installation you are pointing to.
+
+- If speedtables fails to build your extension, most likely you need to edit
+the *generated* sysconfig.tcl file to match your directory paths
+and tool chain.
+
+Hopefully this will all get better over time.
