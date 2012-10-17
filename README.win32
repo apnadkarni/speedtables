@@ -1,0 +1,36 @@
+The Windows port of speed tables currently has many limitations. It
+does not support client-server or shared memory functionality.
+
+To build on Windows using MSys and Visual C++ 6.0, the following
+steps should work with a bit of luck.
+
+- Open a CMD shell in the top level directory. The PATH environment
+  should include the MSys bin directory.
+
+- Set up the Microsoft VC++ 6.0 build environment via vcvars32.bat
+  "%programfiles%\microsoft visual studio\vc98\bin\vcvars32.bat"
+
+- sh configure --with-tcl=c:/tcl/as8.5.19/lib CC=cl
+  I have ActiveState Tcl installed under c:\tcl\as8.5.19. Change for
+  your configuration.
+  
+- make
+  make install
+  This will install the speedtables package in your Tcl installation's
+  lib directory.
+
+- cd to ctables\tests and run 'tclsh speedtables.tcl' to check basic
+  installation.
+
+Some caveats/issues I have run into (perhaps pilot error)
+
+- If you use the MSys bash shell or have a slightly different configuration,
+(for example, PATH settings) be aware that the speedtable compile 
+invocations can get confused about the toolchain (confusing the
+VC and gnu linkers for example).
+
+- When speedtables builds your extension, it seems to use some compiler
+settings based on tclConfig.sh, others from the configure script,
+and some hard coded. To get it to build the extension, you therefore
+have to make sure the toolchain you are using is the same as the
+one used for the Tcl installation you are pointing to.

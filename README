@@ -1,3 +1,10 @@
+This is a fork of Flightaware's speedtables library solely for the
+purpose of porting to Windows. Hopefully at some point changes can
+be merged back upstream. See the README.win32 file for Windows specific
+details.
+
+----
+
 Speed tables is a high-performance memory-resident database. The speed
 table compiler reads a table definition and generates a set of C
 access routines to create, manipulate and search tables containing
