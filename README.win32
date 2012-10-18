@@ -12,25 +12,30 @@ steps should work with a bit of luck.
 
 - sh configure --with-tcl=c:/tcl/lib CC=cl
   I have ActiveState Tcl installed under c:\tcl. Change for
-  your configuration.
+  your configuration. The path specified with --with-tcl should
+  contain the tclConfig.sh file for your Tcl installation.
   
 - make
   make install
   This will install the speedtables package in your Tcl installation's
   lib directory. 
 
-If make install returns various file not found errors,
-you probably have to run configure with explicit path prefixes:
-   sh configure --with-tcl=c:/tcl/lib --prefix=c:/tcl --exec-prefix=c:/tcl/bin
-Note the forward slashes in the path. Most often errors occur because
-the tclconfig.sh from where paths get picked up have backslashes (depending
-how the Tcl binaries were built/installed. If you specify --prefix you
-probably do not need to specify --with-tcl but no harm doing so.
-
-To test, cd to ctables\tests and run 'tclsh speedtables.tcl' to check basic
+- To test, cd to ctables\tests and run 'tclsh speedtables.tcl' to check basic
   installation.
 
-Some caveats/issues I have run into (perhaps pilot error)
+You have to be lucky for the above to work out of the box.
+More likely, some troubleshooting will be required. Check the following:
+
+- If make install returns various file not found errors, or compiles fail
+with missing include files, libraries etc., try first editing
+tclConfig.sh in your Tcl installation and change all \ directory separators
+to /. Then rerun all the above steps.
+
+- You may also need run configure with explicit path prefixes:
+   sh configure --with-tcl=c:/tcl/lib --prefix=c:/tcl --exec-prefix=c:/tcl
+Note the forward slashes in the path. Sometimes, everything builds but
+the package gets placed in a directory which is not in Tcl's auto_path.
+Hence the explicit path specifications.
 
 - If you use the MSys bash shell or have a slightly different configuration,
 (for example, PATH settings) be aware that the speedtable compile 
@@ -43,8 +48,8 @@ and some hard coded. To get it to build the extension, you therefore
 have to make sure the toolchain you are using is the same as the
 one used for the Tcl installation you are pointing to.
 
-- If speedtables fails to build your extension, most likely you need to edit
-the *generated* sysconfig.tcl file to match your directory paths
+- If speedtables fails to build your extension, as a last resort you can
+try editing the *generated* sysconfig.tcl file to match your directory paths
 and tool chain.
 
 Hopefully this will all get better over time.
