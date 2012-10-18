@@ -463,7 +463,7 @@ variable nullIndexDuringSetSource {
 # nullCheckDuringSetSource - standard stuff for handling nulls during set
 #
 variable nullCheckDuringSetSource {
-	int obj_is_null = ${table}_obj_is_null (obj);
+	obj_is_null = ${table}_obj_is_null (obj);
 	if (obj_is_null) {
 	    if (!row->_${fieldName}IsNull) {
 $handleNullIndex
@@ -618,7 +618,7 @@ proc gen_ctable_insert_into_index {fieldName} {
 variable boolSetSource {
       case $optname: {
         int boolean = 0;
-
+        int obj_is_null;
 [gen_null_check_during_set_source $table $fieldName \
         "if (Tcl_GetBooleanFromObj (interp, obj, &boolean) == TCL_ERROR) {
             Tcl_AppendResult (interp, \" while converting $fieldName\", (char *)NULL);
@@ -642,6 +642,7 @@ variable boolSetSource {
 variable numberSetSource {
       case $optname: {
         $typeText value;
+        int obj_is_null;
 [gen_null_check_during_set_source $table $fieldName \
 	"if ($getObjCmd (interp, obj, &value) == TCL_ERROR) {
 	    Tcl_AppendResult (interp, \" while converting $fieldName\", (char *)NULL);
@@ -740,6 +741,7 @@ variable varstringSetSource {
       case $optname: {
 	char *string = NULL;
 	int   length;
+        int obj_is_null;
 [gen_null_check_during_set_source $table $fieldName]
 
 	string = Tcl_GetStringFromObj (obj, &length);
@@ -817,6 +819,7 @@ variable varstringSetSource {
 variable charSetSource {
       case $optname: {
 	char *string;
+        int obj_is_null;
 [gen_null_check_during_set_source $table $fieldName]
 	string = Tcl_GetString (obj);
 [gen_unset_null_during_set_source $table $fieldName \
@@ -837,6 +840,7 @@ variable fixedstringSetSource {
       case $optname: {
 	char *string;
 	int   len;
+        int obj_is_null;
 [gen_null_check_during_set_source $table $fieldName]
 	string = Tcl_GetStringFromObj (obj, &len);
 [gen_unset_null_during_set_source $table $fieldName \
@@ -857,6 +861,7 @@ variable fixedstringSetSource {
 variable inetSetSource {
       case $optname: {
         struct in_addr value = {INADDR_ANY};
+        int obj_is_null;
 [gen_null_check_during_set_source $table $fieldName \
 	"if (!inet_aton (Tcl_GetString (obj), &value)) {
 	    Tcl_AppendResult (interp, \"expected IP address but got \\\"\", Tcl_GetString (obj), \"\\\" parsing field \\\"$fieldName\\\"\", (char *)NULL);
@@ -880,6 +885,7 @@ variable inetSetSource {
 variable macSetSource {
       case $optname: {
         struct ether_addr *mac = (struct ether_addr *) NULL;
+        int obj_is_null;
 [gen_null_check_during_set_source $table $fieldName \
 	"{
 	    mac = ether_aton (Tcl_GetString (obj));
@@ -906,6 +912,7 @@ variable macSetSource {
 #
 variable tclobjSetSource {
       case $optname: {
+        int obj_is_null;
 
 	if (row->$fieldName != (Tcl_Obj *) NULL) {
 	    Tcl_DecrRefCount (row->$fieldName);
@@ -5822,6 +5829,11 @@ proc compile {fileFragName version} {
     # TBD - Output flags depend on cc/linker being used. Not clear how this is
     # to be determined as tclConfig.sh does not seem to have a setting for this.
     if {[string match -nocase "cl*" $sysconfig(cc)]} {
+        # Get rid of precompiled header flags
+        regsub -all {\s-Fp\S*} $cc_cmd "" cc_cmd
+        # speedtables generates signed/unsigned warnings. Get rid of
+        # -WX which causes warnings to be treated as errors
+        regsub -all {\s-WX} $cc_cmd "" cc_cmd
         append cc_cmd " -Fo$objFile"
     } else {
         append cc_cmd " -o $objFile"
